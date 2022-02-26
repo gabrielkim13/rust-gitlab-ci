@@ -1,0 +1,18 @@
+stages:
+  - triggers
+
+merge_request:
+  stage: triggers
+  trigger:
+    include: .gitlab/merge_request.gitlab-ci.yml
+    strategy: depend
+  only:
+    - merge_requests
+
+release:
+  stage: triggers
+  trigger:
+    include: .gitlab/release.gitlab-ci.yml
+    strategy: depend
+  only:
+    - tags

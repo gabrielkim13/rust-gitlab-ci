@@ -1,0 +1,45 @@
+stages:
+  - build
+  - upload
+  - release
+
+variables:
+  TARGET: 'armv7-unknown-linux-gnueabihf'
+  # SERVER_URL: '$CI_SERVER_URL'
+  SERVER_URL: 'http://web:8929'
+  PACKAGE_REGISTRY_PATH: 'api/v4/projects/$CI_PROJECT_ID/packages/generic/$CI_PROJECT_NAME/$CI_COMMIT_TAG'
+
+build:
+  stage: build
+  image: gabrielkim13/rust-armv7
+  cache:
+    paths:
+      - target
+  script:
+    - cargo build --release --target=$TARGET
+    - arm-linux-gnueabihf-strip target/$TARGET/release/$CI_PROJECT_NAME
+  artifacts:
+    paths:
+      - target/$TARGET/release/$CI_PROJECT_NAME
+
+upload:
+  stage: upload
+  image: curlimages/curl:latest
+  script:
+    - 'curl 
+        -k
+        --header "JOB-TOKEN: ${CI_JOB_TOKEN}"
+        --upload-file "target/${TARGET}/release/${CI_PROJECT_NAME}"
+        "${SERVER_URL}/${PACKAGE_REGISTRY_PATH}/${CI_PROJECT_NAME}"'
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:v0.8.0
+  script:
+    - 'release-cli
+        --insecure-https
+        --server-url "${SERVER_URL}"
+        create
+        --name "Release ${CI_COMMIT_TAG}"
+        --tag-name "${CI_COMMIT_TAG}"
+        --assets-link "{\"name\":\"${CI_PROJECT_NAME}\",\"url\":\"${CI_SERVER_URL}/${PACKAGE_REGISTRY_PATH}/${CI_PROJECT_NAME}\"}"'

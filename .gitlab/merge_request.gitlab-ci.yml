@@ -1,0 +1,13 @@
+workflow:
+  rules:
+    - when: always
+
+merge_request:
+  image: rust:alpine
+  cache:
+    paths:
+      - target
+  script:
+    - rustup component add clippy
+    - cargo clippy
+    - cargo test

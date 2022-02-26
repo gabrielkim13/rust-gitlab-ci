@@ -1,0 +1,30 @@
+version: '3.6'
+
+services:
+  web:
+    image: 'gitlab/gitlab-ee:13.8.2-ee.0'
+    container_name: gitlab_web
+    # restart: always
+    hostname: 'localhost'
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2224
+    ports:
+      - '8929:8929'
+      - '2224:22'
+    volumes:
+      - '.docker/config:/etc/gitlab'
+      - '.docker/logs:/var/log/gitlab'
+      - '.docker/data:/var/opt/gitlab'
+    shm_size: '256m'
+
+  runner1:
+    image: 'gitlab/gitlab-runner:alpine'
+    container_name: gitlab_runner1
+    # restart: always
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '.docker/gitlab-runner/config:/etc/gitlab-runner'
+    extra_hosts:
+      - 'host.docker.internal:172.17.0.1'
